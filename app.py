@@ -426,7 +426,11 @@ def handle_requests():
             else:
                 like_url = "https://clientbp.ggpolarbear.com/LikeProfile"
 
-            asyncio.run(send_multiple_requests(uid, server_name, like_url))
+            loop = asyncio.new_event_loop()
+            try:
+                loop.run_until_complete(send_multiple_requests(uid, server_name, like_url))
+            finally:
+                loop.close()
 
             after = make_request(encrypted_uid, server_name, token)
             if after is None:
@@ -458,7 +462,9 @@ def handle_requests():
         return jsonify({"error": str(e)}), 500
 
 # ================= Start server =================
+# Start scheduler at module level so it runs under gunicorn/wsgi too
+start_background_scheduler()
+
 if __name__ == "__main__":
-    start_background_scheduler()
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
